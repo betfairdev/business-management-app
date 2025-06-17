@@ -58,7 +58,7 @@ app.use('*', (req, res) => {
 const startServer = async () => {
   try {
     await initializeDatabase();
-    
+
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📊 API Documentation available at http://localhost:${PORT}`);
