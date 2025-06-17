@@ -1,258 +1,115 @@
-// fileManagerUtility.ts
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 
-import { Capacitor } from '@capacitor/core';
-import {
-  Filesystem,
-  Directory,
-  type ReaddirResult,
-  type ReadFileResult,
-  type WriteFileOptions,
-  type DeleteFileOptions,
-} from '@capacitor/filesystem';
-import { FileViewer } from '@capacitor/file-viewer';
-import axios, { type AxiosInstance } from 'axios';
-
-export interface FileEntry {
+export interface FileInfo {
   name: string;
-  uri?: string;       // local URI or remote URL
+  path: string;
+  uri?: string;
   size?: number;
-  modified?: number;
+  modificationTime?: number;
 }
 
-/**
- * FileManagerUtility
- *
- * – Local FS (Capacitor & web)
- *   • pickFile() → File
- *   • saveLocal(file)
- *   • listLocal()
- *   • viewLocal(name)
- *   • deleteLocal(name)
- *
- * – Remote API (via Axios)
- *   • listRemote(endpoint)
- *   • uploadRemote(file or localName, endpoint)
- *   • downloadRemote(name, endpoint)
- *   • viewRemote(name, endpoint)
- *   • deleteRemote(name, endpoint)
- *
- */
-export class FileManagerUtility {
-  private static apiClient: AxiosInstance;
+export interface FilterOptions {
+  fromDate?: Date;
+  toDate?: Date;
+  extensions?: string[]; // e.g. ['.txt', '.jpg']
+}
 
-  /** Must be called once before any remote calls */
-  static initApi(baseUrl: string) {
-    this.apiClient = axios.create({
-      baseURL: baseUrl,
-      responseType: 'json',
-    });
-  }
+export class FileManager {
+  private directory: Directory;
 
-  // ────────────────
-  // LOCAL OPERATIONS
-  // ────────────────
-
-  /** Pick a File (browser input or native DocumentPicker) */
-  static async pickFile(): Promise<File | null> {
-    if (Capacitor.getPlatform() === 'web') {
-      return new Promise(resolve => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.onchange = () => resolve(input.files?.[0] ?? null);
-        input.click();
-      });
-    } else {
-      // Native: use @capacitor-community/document-picker
-      const { DocumentPicker } = await import('@capacitor-community/document-picker');
-      const { result } = await DocumentPicker.pick({ multiple: false });
-      if (!result.length) return null;
-
-      const doc = result[0];
-      // Read as base64
-      const read = await Filesystem.readFile({
-        path: doc.uri,
-        directory: Directory.Data,
-        encoding: 'base64',
-      });
-      const blob = FileManagerUtility.base64ToBlob(read.data, doc.mimeType || '');
-      return new File([blob], doc.name, { type: doc.mimeType });
-    }
-  }
-
-  /** Save a File locally under Directory.Data */
-  static async saveLocal(file: File): Promise<void> {
-    const base64 = await FileManagerUtility.blobToBase64(file);
-    const opts: WriteFileOptions = {
-      path: file.name,
-      data: base64,
-      directory: Directory.Data,
-    };
-    await Filesystem.writeFile(opts);
-  }
-
-  /** List all local files */
-  static async listLocal(): Promise<FileEntry[]> {
-    const dir: ReaddirResult = await Filesystem.readdir({
-      path: '',
-      directory: Directory.Data,
-    });
-    return dir.files.map(name => ({ name }));
-  }
-
-  /** Get a URI for a local file (for viewing or downloading in web) */
-  private static async getLocalUri(name: string): Promise<string> {
-    if (Capacitor.getPlatform() === 'web') {
-      const read: ReadFileResult = await Filesystem.readFile({
-        path: name,
-        directory: Directory.Data,
-        encoding: 'base64',
-      });
-      const mime = FileManagerUtility.getMimeType(name);
-      const blob = FileManagerUtility.base64ToBlob(read.data, mime);
-      return URL.createObjectURL(blob);
-    } else {
-      const { uri } = await Filesystem.getUri({
-        path: name,
-        directory: Directory.Data,
-      });
-      return uri;
-    }
-  }
-
-  /** View a local file (opens with native FileViewer or in new tab on web) */
-  static async viewLocal(name: string): Promise<void> {
-    const uri = await this.getLocalUri(name);
-    if (Capacitor.getPlatform() === 'web') {
-      window.open(uri, '_blank');
-    } else {
-      await FileViewer.open({ filePath: uri });
-    }
-  }
-
-  /** Delete a local file */
-  static async deleteLocal(name: string): Promise<void> {
-    const opts: DeleteFileOptions = {
-      path: name,
-      directory: Directory.Data,
-    };
-    await Filesystem.deleteFile(opts);
-  }
-
-  // ────────────────
-  // REMOTE OPERATIONS
-  // ────────────────
-
-  /** List files from your API: GET /endpoint → [{ name, uri, size?, modified? }, …] */
-  static async listRemote(endpoint: string): Promise<FileEntry[]> {
-    if (!this.apiClient) throw new Error('API not initialized');
-    const resp = await this.apiClient.get<FileEntry[]>(endpoint);
-    return resp.data;
+  constructor(directory: Directory = Directory.Documents) {
+    this.directory = directory;
   }
 
   /**
-   * Upload:
-   *  - if you pass a File instance, it will directly upload that
-   *  - if you pass a local filename, it will read from local FS then upload
+   * Upload or store a file
+   * @param path relative path including file name, e.g. 'folder/file.txt'
+   * @param data base64 encoded string
+   * @param encoding Defaults to UTF8
    */
-  static async uploadRemote(
-    fileOrName: File | string,
-    endpoint: string,
-    extraParams?: Record<string,string>
-  ): Promise<any> {
-    if (!this.apiClient) throw new Error('API not initialized');
-
-    let file: File;
-    if (typeof fileOrName === 'string') {
-      const read = await Filesystem.readFile({
-        path: fileOrName,
-        directory: Directory.Data,
-        encoding: 'base64'
-      });
-      const mime = FileManagerUtility.getMimeType(fileOrName);
-      file = new File([FileManagerUtility.base64ToBlob(read.data, mime)], fileOrName, { type: mime });
-    } else {
-      file = fileOrName;
-    }
-
-    const form = new FormData();
-    form.append('file', file, file.name);
-    if (extraParams) {
-      Object.entries(extraParams).forEach(([k,v]) => form.append(k,v));
-    }
-
-    // adjust headers for multipart
-    return this.apiClient.post(endpoint, form, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }).then(r => r.data);
-  }
-
-  /** Download a remote file as Blob */
-  static async downloadRemote(name: string, endpoint: string): Promise<Blob> {
-    if (!this.apiClient) throw new Error('API not initialized');
-    const resp = await this.apiClient.get<Blob>(`${endpoint}/${encodeURIComponent(name)}`, {
-      responseType: 'blob'
+  async upload(path: string, data: string, encoding: Encoding = Encoding.UTF8): Promise<FileInfo> {
+    await Filesystem.writeFile({
+      path,
+      data,
+      directory: this.directory,
+      encoding,
     });
-    return resp.data;
+    return this.getInfo(path);
   }
 
-  /** View a remote file: downloads and then opens */
-  static async viewRemote(name: string, endpoint: string): Promise<void> {
-    const blob = await this.downloadRemote(name, endpoint);
-    const url = URL.createObjectURL(blob);
-    if (Capacitor.getPlatform() === 'web') {
-      window.open(url, '_blank');
-    } else {
-      // write to cache then open
-      const base64 = await FileManagerUtility.blobToBase64(blob);
-      const path = `${Directory.Cache}/${name}`;
-      await Filesystem.writeFile({ path, data: base64, directory: Directory.Cache });
-      await FileViewer.open({ filePath: path });
-    }
-  }
-
-  /** Delete a remote file: DELETE /endpoint/{name} */
-  static async deleteRemote(name: string, endpoint: string): Promise<any> {
-    if (!this.apiClient) throw new Error('API not initialized');
-    return this.apiClient.delete(`${endpoint}/${encodeURIComponent(name)}`)
-      .then(r => r.data);
-  }
-
-  // ────────────────
-  // HELPERS
-  // ────────────────
-
-  /** Convert Blob to base64 */
-  private static blobToBase64(blob: Blob): Promise<string> {
-    return new Promise((res, rej) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        res(dataUrl.split(',')[1]);
-      };
-      reader.onerror = rej;
-      reader.readAsDataURL(blob);
+  /**
+   * Remove a file
+   * @param path relative path including file name
+   */
+  async remove(path: string): Promise<void> {
+    await Filesystem.deleteFile({
+      path,
+      directory: this.directory,
     });
   }
 
-  /** Convert base64 to Blob */
-  private static base64ToBlob(base64: string, mime: string): Blob {
-    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-    return new Blob([bytes], { type: mime });
+  /**
+   * Get file information
+   */
+  async getInfo(path: string): Promise<FileInfo> {
+    const stat = await Filesystem.stat({
+      path,
+      directory: this.directory,
+    });
+    return {
+      name: stat.name,
+      path: stat.uri,
+      uri: stat.uri,
+      size: stat.size,
+      modificationTime: stat.mtime,
+    };
   }
 
-  /** Simple extension → MIME map */
-  private static getMimeType(name: string): string {
-    const ext = name.split('.').pop()?.toLowerCase() ?? '';
-    switch (ext) {
-      case 'png': return 'image/png';
-      case 'jpg':
-      case 'jpeg': return 'image/jpeg';
-      case 'pdf': return 'application/pdf';
-      case 'txt': return 'text/plain';
-      case 'csv': return 'text/csv';
-      case 'json': return 'application/json';
-      case 'xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-      default: return 'application/octet-stream';
-    }
+  /**
+   * List files in a directory
+   * @param path relative folder path, e.g. 'folder'
+   */
+  async list(path: string = ''): Promise<FileInfo[]> {
+    const result = await Filesystem.readdir({
+      path,
+      directory: this.directory,
+    });
+    // stat each entry
+    const infos = await Promise.all(
+      result.files.map(async name => {
+        const filePath: string = typeof name === 'string' ? (path ? `${path}/${name}` : name) : name.name;
+        return this.getInfo(filePath);
+      })
+    );
+    return infos;
+  }
+
+  /**
+   * Filter files by date range and/or extension
+   */
+  async filter(path: string = '', opts: FilterOptions): Promise<FileInfo[]> {
+    const list = await this.list(path);
+    return list.filter(info => {
+      let ok = true;
+      if (opts.fromDate) {
+        ok = ok && info.modificationTime! >= opts.fromDate.getTime();
+      }
+      if (opts.toDate) {
+        ok = ok && info.modificationTime! <= opts.toDate.getTime();
+      }
+      if (opts.extensions && opts.extensions.length) {
+        ok = ok && opts.extensions!.some(ext => info.name.endsWith(ext));
+      }
+      return ok;
+    });
+  }
+
+  /**
+   * Search files by name substring
+   */
+  async search(path: string = '', query: string): Promise<FileInfo[]> {
+    const list = await this.list(path);
+    const lower = query.toLowerCase();
+    return list.filter(info => info.name.toLowerCase().includes(lower));
   }
 }

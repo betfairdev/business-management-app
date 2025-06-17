@@ -18,7 +18,7 @@ export class ShareUtility {
     text?: string,
     url?: string
   ): Promise<void> {
-    const isNative = !!(window as any).Capacitor;
+    const isNative = !!(window as unknown as { Capacitor?: unknown }).Capacitor;
 
     if (isNative) {
       const base64 = await ShareUtility.blobToBase64(blob);

@@ -1,0 +1,8 @@
+{
+    "appConfig": {
+        "mode": "capacitor",
+        "apiBaseUrl": "http://localhost:3000/api",
+        "pro": 1,
+        "proExpireDate": "2025-12-30"
+    }
+}

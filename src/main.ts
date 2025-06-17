@@ -1,6 +1,7 @@
 import './assets/main.css'
 import 'flowbite'
 
+import { initializeDatabase } from './config/database';
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
@@ -12,4 +13,10 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 
-app.mount('#app')
+initializeDatabase()
+  .then(() => {
+    app.mount('#app')
+  })
+  .catch(console.error);
+
+
