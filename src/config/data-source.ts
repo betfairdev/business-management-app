@@ -1,7 +1,6 @@
-// src/config/database.ts
-import { CapacitorSQLite, SQLiteConnection } from '@capacitor-community/sqlite';
-import { DataSource, type DataSourceOptions } from 'typeorm';
-
+// data-source.ts
+import "reflect-metadata";
+import { DataSource } from "typeorm";
 // ——— Your Entities ———
 import { User } from '../entities/User';
 import { Account } from '../entities/Account';
@@ -85,43 +84,9 @@ export const ENTITIES = [
   TaxRate,
 ];
 
-const DATABASE_NAME = 'app.db';
-const sqliteConnection = new SQLiteConnection(CapacitorSQLite);
-
-const dataSourceOptions: DataSourceOptions = {
-  type: 'capacitor',
-  database: DATABASE_NAME,
-  driver: sqliteConnection,
-  logging: ['error', 'warn', 'info'],
-  synchronize: true,
+export const AppDataSource = new DataSource({
+  type: "sqlite",
+  database: "dummy.db",
   entities: ENTITIES,
-};
-
-export const AppDataSource = new DataSource(dataSourceOptions);
-
-/**
- * Call this during app startup (e.g. in your main.ts or a service)
- * to ensure the native DB is created/opened and TypeORM is initialized.
- */
-export async function initializeDatabase(): Promise<void> {
-  try {
-    // Create or open the native SQLite database
-    await sqliteConnection.createConnection(
-      DATABASE_NAME, // database
-      false,         // encrypted
-      'no-encryption', // mode
-      1,             // version
-      false      // readonly
-    );
-
-    // Initialize TypeORM DataSource if not already done
-    if (!AppDataSource.isInitialized) {
-      await AppDataSource.initialize();
-    }
-
-    console.log('✅ Database initialized');
-  } catch (err) {
-    console.error('❌ Failed to initialize database:', err);
-    throw err;
-  }
-}
+  logging: false,
+});

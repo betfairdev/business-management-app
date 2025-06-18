@@ -72,7 +72,7 @@ import { PaymentMethod } from '../entities/PaymentMethod';
 import { CreatePaymentMethodDto } from '../dtos/CreatePaymentMethodDto';
 import { UpdatePaymentMethodDto } from '../dtos/UpdatePaymentMethodDto';
 
-import { Permission } from '../entities/Permission';
+import { Permission } from '../entities/Permission.ts';
 import { CreatePermissionDto } from '../dtos/CreatePermissionDto';
 import { UpdatePermissionDto } from '../dtos/UpdatePermissionDto';
 

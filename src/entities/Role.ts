@@ -7,7 +7,7 @@ import {
   JoinTable,
 } from 'typeorm';
 import { User } from './User';
-import { Permission } from './Permission';
+import { Permission } from './Permission.ts';
 
 @Entity()
 export class Role {
