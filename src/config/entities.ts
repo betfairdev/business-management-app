@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * For each entity in src/entities/, import:
  *   - the Entity class
@@ -60,7 +61,7 @@ import { JournalEntry } from '../entities/JournalEntry';
 import { CreateJournalEntryDto } from '../dtos/CreateJournalEntryDto';
 import { UpdateJournalEntryDto } from '../dtos/UpdateJournalEntryDto';
 
-import { LeaveRequest, LeaveStatus } from '../entities/LeaveRequest';
+import { LeaveRequest } from '../entities/LeaveRequest';
 import { CreateLeaveRequestDto } from '../dtos/CreateLeaveRequestDto';
 import { UpdateLeaveRequestDto } from '../dtos/UpdateLeaveRequestDto';
 

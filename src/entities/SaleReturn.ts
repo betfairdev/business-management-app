@@ -33,10 +33,10 @@ export class SaleReturn {
   paymentMethod?: PaymentMethod;
 
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   createdBy?: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   updatedBy?: number;
 
   @CreateDateColumn()

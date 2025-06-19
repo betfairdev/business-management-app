@@ -15,7 +15,7 @@ export class Brand {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', unique: true })
   name!: string;
 
   @Column({ type: 'text', nullable: true })
@@ -23,9 +23,9 @@ export class Brand {
 
   @OneToMany(() => Product, (product) => product.brand)
   products!: Product[];
-  
-  @Column({ nullable: true }) createdBy?: number;
-  @Column({ nullable: true }) updatedBy?: number;
+
+  @Column({ type: 'int', nullable: true }) createdBy?: number;
+  @Column({ type: 'int', nullable: true }) updatedBy?: number;
 
   @CreateDateColumn()
   createdAt!: Date;

@@ -51,7 +51,7 @@ export class Sale {
   @ManyToOne(() => PaymentMethod, (pm) => pm.sales, { eager: true, nullable: true })
   paymentMethod?: PaymentMethod
 
-  @Column({ nullable: true }) invoiceNumber?: string; // NEW
+  @Column({ type: 'varchar', nullable: true }) invoiceNumber?: string; // NEW
 
   @Column('text', { array: true, nullable: true })
   receiptOrAny?: string[];
@@ -61,8 +61,8 @@ export class Sale {
 
   @Column({ type: "text", nullable: true }) notes?: string; // NEW
 
-  @Column({ nullable: true }) createdBy?: number;
-  @Column({ nullable: true }) updatedBy?: number;
+  @Column({ type: 'int', nullable: true }) createdBy?: number;
+  @Column({ type: 'int', nullable: true }) updatedBy?: number;
 
   @CreateDateColumn() createdAt!: Date;
   @UpdateDateColumn() updatedAt!: Date;

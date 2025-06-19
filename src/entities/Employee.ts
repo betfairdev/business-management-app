@@ -12,10 +12,10 @@ import { LeaveRequest } from './LeaveRequest';
 @Entity()
 export class Employee {
   @PrimaryGeneratedColumn('uuid') id!: string;
-  @Column() name!: string;
-  @Column({ nullable: true }) email?: string;      // optional
-  @Column({ nullable: true }) phone?: string;      // optional
-  @Column({ nullable: true }) whatsapp?: string;   // NEW
+  @Column({ type: 'varchar' }) name!: string;
+  @Column({ type: 'varchar', nullable: true }) email?: string;      // optional
+  @Column({ type: 'varchar', nullable: true }) phone?: string;      // optional
+  @Column({ type: 'varchar', nullable: true }) whatsapp?: string;   // NEW
   @Column({ nullable: true, type: 'text' }) address?: string; // optional
 
   @ManyToOne(() => Department, (d) => d.employees, { nullable: true }) department?: Department;
@@ -28,8 +28,8 @@ export class Employee {
   @Column({ type: 'date', nullable: true }) hireDate?: string;
   @Column('decimal', { precision: 15, scale: 2, nullable: true }) salary?: number;
 
-  @Column({ nullable: true }) createdBy?: number;
-  @Column({ nullable: true }) updatedBy?: number;
+  @Column({ type: 'int', nullable: true }) createdBy?: number;
+  @Column({ type: 'int', nullable: true }) updatedBy?: number;
 
   @CreateDateColumn() createdAt!: Date;
   @UpdateDateColumn() updatedAt!: Date;

@@ -45,8 +45,8 @@ export class Purchase {
 
   @Column({ type: 'text', nullable: true }) notes?: string;  // NEW
 
-  @Column({ nullable: true }) createdBy?: number;
-  @Column({ nullable: true }) updatedBy?: number;
+  @Column({ type: 'int', nullable: true }) createdBy?: number;
+  @Column({ type: 'int', nullable: true }) updatedBy?: number;
 
   @CreateDateColumn() createdAt!: Date;
   @UpdateDateColumn() updatedAt!: Date;

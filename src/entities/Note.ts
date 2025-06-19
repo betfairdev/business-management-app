@@ -8,11 +8,11 @@ import {
 @Entity()
 export class Note {
   @PrimaryGeneratedColumn('uuid') id!: string;
-  @Column() title!: string;  // NEW
+  @Column({ type: 'varchar' }) title!: string;
   @Column({ type: 'text' }) content!: string;
-  
-  @Column({ nullable: true }) createdBy?: number;
-  @Column({ nullable: true }) updatedBy?: number;
+
+  @Column({ type: 'int', nullable: true }) createdBy?: number;
+  @Column({ type: 'int', nullable: true }) updatedBy?: number;
 
   @CreateDateColumn() createdAt!: Date;
   @UpdateDateColumn() updatedAt!: Date;

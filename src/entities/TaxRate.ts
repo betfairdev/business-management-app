@@ -17,13 +17,13 @@ export class TaxRate {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', unique: true })
   name!: string;  // e.g. VAT, GST
 
   @Column('decimal', { precision: 5, scale: 2 })
   rate!: number;  // percentage rate
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   description?: string;
 
   @OneToMany(() => Product, (product) => product.tax)
@@ -33,9 +33,9 @@ export class TaxRate {
   @ManyToMany(() => TaxGroup, (group) => group.taxRates)
   groups!: TaxGroup[];
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   createdBy?: number;
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   updatedBy?: number;
 
   @CreateDateColumn()

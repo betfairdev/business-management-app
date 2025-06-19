@@ -24,7 +24,7 @@ export class Account {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', unique: true })
   name!: string;
 
   @Column({ nullable: true, type: 'text' })
@@ -36,7 +36,7 @@ export class Account {
   @Column({ type: 'varchar', length: 3 })
   currency!: string;
 
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
   isActive!: boolean;
 
   @Column({ type: 'text', nullable: true })
@@ -48,13 +48,13 @@ export class Account {
   @OneToMany(() => JournalEntry, (je) => je.creditAccount)
   creditJournalEntries!: JournalEntry[];
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   createdBy?: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   updatedBy?: number;
 
-  @CreateDateColumn()   createdAt!: Date;
-  @UpdateDateColumn()   updatedAt!: Date;
-  @DeleteDateColumn()   deletedAt?: Date;
+  @CreateDateColumn() createdAt!: Date;
+  @UpdateDateColumn() updatedAt!: Date;
+  @DeleteDateColumn() deletedAt?: Date;
 }

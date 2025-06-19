@@ -28,14 +28,14 @@ export class JournalEntry {
   @JoinColumn({ name: 'debitAccountId' })
   debitAccount!: Account;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   debitAccountId?: string;
 
   @ManyToOne(() => Account, (acct) => acct.creditJournalEntries)
   @JoinColumn({ name: 'creditAccountId' })
   creditAccount!: Account;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   creditAccountId?: string;
 
   @Column({ type: 'decimal' })
@@ -44,13 +44,13 @@ export class JournalEntry {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   transactionReference?: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   createdBy?: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   updatedBy?: number;
 
   @CreateDateColumn()

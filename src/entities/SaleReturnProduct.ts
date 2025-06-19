@@ -34,10 +34,10 @@ export class SaleReturnProduct {
   @ManyToOne(() => Stock, (s) => s.saleProducts, { nullable: true })
   stock?: Stock;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   createdBy?: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   updatedBy?: number;
 
   @CreateDateColumn()

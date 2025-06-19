@@ -39,13 +39,13 @@ export class Product {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ unique: true, nullable: true })
+  @Column({ type: 'varchar', unique: true, nullable: true })
   sku?: string;
 
-  @Column({ unique: true, nullable: true })
+  @Column({ type: 'varchar', unique: true, nullable: true })
   barcode?: string;
 
-  @Column()
+  @Column({ type: 'varchar' })
   name!: string;
 
   @ManyToOne(() => Brand, { nullable: true })
@@ -110,10 +110,10 @@ export class Product {
   @Column({ type: 'simple-enum', enum: ['Active', 'Inactive'], default: 'Active' })
   status!: 'Active' | 'Inactive';
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   createdBy?: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   updatedBy?: number;
 
   @CreateDateColumn()

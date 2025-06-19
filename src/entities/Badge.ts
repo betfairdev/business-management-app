@@ -12,13 +12,13 @@ import {
 @Entity()
 export class Badge {
   @PrimaryGeneratedColumn() id!: number;
-  @Column({ unique: true }) name!: string;
+  @Column({ type: "varchar", unique: true }) name!: string;
   @Column({ type: "text", nullable: true }) description?: string;
-  
-  @Column({ nullable: true }) createdBy?: number;
-  @Column({ nullable: true }) updatedBy?: number;
+  @Column({ type: "int", nullable: true }) createdBy?: number;
+  @Column({ type: "int", nullable: true }) updatedBy?: number;
 
   @CreateDateColumn() createdAt!: Date;
   @UpdateDateColumn() updatedAt!: Date;
   @DeleteDateColumn() deletedAt?: Date;
 }
+

@@ -25,8 +25,8 @@ export class PurchaseProduct {
   @ManyToOne(() => Stock, (s) => s.saleProducts, { nullable: true })
   stock?: Stock;
 
-  @Column({ nullable: true }) createdBy?: number;
-  @Column({ nullable: true }) updatedBy?: number;
+  @Column({ type: 'int', nullable: true }) createdBy?: number;
+  @Column({ type: 'int', nullable: true }) updatedBy?: number;
 
   @CreateDateColumn() createdAt!: Date;
   @UpdateDateColumn() updatedAt!: Date;

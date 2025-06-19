@@ -24,7 +24,7 @@ export class Expense {
     @Column({ type: 'date' })
     date!: string;
 
-    @Column({ nullable: true })
+    @Column({ type: 'text', nullable: true })
     description?: string;
 
     @ManyToOne(() => ExpenseType, (type) => type.expenses, { eager: true })
@@ -33,8 +33,8 @@ export class Expense {
     @ManyToOne(() => PaymentMethod, (pm) => pm.expenses, { eager: true })
     paymentMethod!: PaymentMethod;
 
-    @Column({ nullable: true }) createdBy?: number;
-    @Column({ nullable: true }) updatedBy?: number;
+    @Column({ type: 'int', nullable: true }) createdBy?: number;
+    @Column({ type: 'int', nullable: true }) updatedBy?: number;
 
     @CreateDateColumn()
     createdAt!: Date;

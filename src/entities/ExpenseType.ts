@@ -15,17 +15,17 @@ export class ExpenseType {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column({ unique: true })
+    @Column({ type: 'varchar', unique: true })
     name!: string;
 
-    @Column({ nullable: true })
+    @Column({ type: 'text', nullable: true })
     description?: string;
 
     @OneToMany(() => Expense, (expense) => expense.expenseType)
     expenses!: Expense[];
 
-    @Column({ nullable: true }) createdBy?: number;
-    @Column({ nullable: true }) updatedBy?: number;
+    @Column({ type: 'int', nullable: true }) createdBy?: number;
+    @Column({ type: 'int', nullable: true }) updatedBy?: number;
 
     @CreateDateColumn()
     createdAt!: Date;

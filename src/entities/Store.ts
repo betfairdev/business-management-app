@@ -1,8 +1,7 @@
 // src/entities/Store.ts
 
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, DeleteDateColumn,
+  Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, DeleteDateColumn,
 } from 'typeorm';
 import { Employee } from './Employee';
 import { StockTransfer } from './StockTransfer';
@@ -21,10 +20,10 @@ export enum StoreType {
 @Entity()
 export class Store {
   @PrimaryGeneratedColumn('uuid') id!: string;
-  @Column() name!: string;
+  @Column({ type: 'varchar' }) name!: string;
   @Column({ type: 'text', nullable: true }) address?: string;
-  @Column({ nullable: true }) phone?: string;
-  @Column({ nullable: true }) whatsapp?: string;
+  @Column({ type: 'varchar', nullable: true }) phone?: string;
+  @Column({ type: 'varchar', nullable: true }) whatsapp?: string;
 
   @Column({ type: 'simple-enum', enum: StoreType, default: StoreType.RETAIL })
   type!: StoreType;
@@ -50,8 +49,8 @@ export class Store {
   @OneToMany(() => Employee, (emp) => emp.store, { cascade: true })
   employees!: Employee[];
 
-  @Column({ nullable: true }) createdBy?: number;
-  @Column({ nullable: true }) updatedBy?: number;
+  @Column({ type: 'int', nullable: true }) createdBy?: number;
+  @Column({ type: 'int', nullable: true }) updatedBy?: number;
 
   @CreateDateColumn() createdAt!: Date;
   @UpdateDateColumn() updatedAt!: Date;

@@ -29,10 +29,10 @@ export class Stock {
   @ManyToOne(() => Store, (s) => s.stocks, { nullable: true })
   store?: Store;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   warehouse?: string;
 
-  @Column({ unique: true, nullable: true })
+  @Column({ type: 'varchar', unique: true, nullable: true })
   barcode?: string;
 
   @OneToMany(() => SaleProduct, (sp) => sp.stock)
@@ -43,8 +43,8 @@ export class Stock {
 
   @Column({ type: 'text', nullable: true }) notes?: string;
 
-  @Column({ nullable: true }) createdBy?: number;
-  @Column({ nullable: true }) updatedBy?: number;
+  @Column({ type: 'int', nullable: true }) createdBy?: number;
+  @Column({ type: 'int', nullable: true }) updatedBy?: number;
 
   @CreateDateColumn() createdAt!: Date;
   @UpdateDateColumn() updatedAt!: Date;

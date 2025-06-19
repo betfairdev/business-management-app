@@ -12,9 +12,9 @@ import { Permission } from './Permission.ts';
 @Entity()
 export class Role {
   @PrimaryGeneratedColumn('uuid') id!: string;
-  @Column({ unique: true }) name!: string;
+  @Column({ type: 'varchar', unique: true }) name!: string;
   @Column({ type: 'text', nullable: true }) description?: string;
-  @Column({ default: false }) isSystemRole!: boolean;
+  @Column({ type: 'boolean', default: false }) isSystemRole!: boolean;
 
   @OneToMany(() => User, (user) => user.role)
   users!: User[];
@@ -28,8 +28,8 @@ export class Role {
   })
   permissions!: Permission[];
 
-  @Column({ nullable: true }) createdBy?: number;
-  @Column({ nullable: true }) updatedBy?: number;
+  @Column({ type: 'int', nullable: true }) createdBy?: number;
+  @Column({ type: 'int', nullable: true }) updatedBy?: number;
 
   @CreateDateColumn() createdAt!: Date;
   @UpdateDateColumn() updatedAt!: Date;

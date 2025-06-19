@@ -32,10 +32,10 @@ export class PurchaseReturn {
   @ManyToOne(() => PaymentMethod, (pm) => pm.purchaseReturns, { eager: true, nullable: true })
   paymentMethod?: PaymentMethod;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   createdBy?: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   updatedBy?: number;
 
   @CreateDateColumn()

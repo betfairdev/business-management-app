@@ -17,7 +17,7 @@ export class Batch {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column({ type: 'varchar' })
   batchNumber!: string;
 
   @Column({ type: 'date', nullable: true })
@@ -32,10 +32,10 @@ export class Batch {
   @OneToMany(() => Stock, (stock) => stock.batch)
   stockEntries!: Stock[];
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   createdBy?: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   updatedBy?: number;
 
   @CreateDateColumn()
