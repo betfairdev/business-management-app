@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Repository, FindManyOptions, FindOneOptions, DeepPartial } from 'typeorm';
+import { Repository, type FindManyOptions, type FindOneOptions, type DeepPartial, type ObjectLiteral } from 'typeorm';
 import { getDataSource } from '../config/database';
-import { plainToClass, ClassConstructor } from 'class-transformer';
+import { plainToClass, type ClassConstructor } from 'class-transformer';
 import { validate } from 'class-validator';
 
 export interface PaginationOptions {
@@ -24,7 +24,7 @@ export interface SearchOptions {
   fields?: string[];
 }
 
-export class BaseService<Entity, CreateDto, UpdateDto> {
+export class BaseService<Entity extends ObjectLiteral, CreateDto, UpdateDto> {
   protected repository: Repository<Entity>;
   protected entityClass: ClassConstructor<Entity>;
   protected createDtoClass: ClassConstructor<CreateDto>;
@@ -51,13 +51,13 @@ export class BaseService<Entity, CreateDto, UpdateDto> {
     // Validate DTO
     const dto = plainToClass(this.createDtoClass, createDto);
     const errors = await validate(dto as any);
-    
+
     if (errors.length > 0) {
       throw new Error(`Validation failed: ${errors.map(e => Object.values(e.constraints || {}).join(', ')).join('; ')}`);
     }
 
     const entity = this.repository.create(createDto as any);
-    return await this.repository.save(entity);
+    return await this.repository.save(entity as any as DeepPartial<Entity>);
   }
 
   /**
@@ -76,19 +76,19 @@ export class BaseService<Entity, CreateDto, UpdateDto> {
     // Apply search if provided
     if (options?.query && this.searchableFields.length > 0) {
       const searchFields = options.fields || this.searchableFields;
-      const searchConditions = searchFields.map(field => 
+      const searchConditions = searchFields.map(field =>
         `entity.${field} ILIKE :query`
       ).join(' OR ');
-      
-      queryBuilder = queryBuilder.where(`(${searchConditions})`, { 
-        query: `%${options.query}%` 
+
+      queryBuilder = queryBuilder.where(`(${searchConditions})`, {
+        query: `%${options.query}%`
       });
     }
 
     // Apply sorting
     if (options?.sortBy) {
       queryBuilder = queryBuilder.orderBy(
-        `entity.${options.sortBy}`, 
+        `entity.${options.sortBy}`,
         options.sortOrder || 'ASC'
       );
     } else {
@@ -96,7 +96,7 @@ export class BaseService<Entity, CreateDto, UpdateDto> {
     }
 
     // Apply additional find options
-    if (findOptions?.relations) {
+    if (Array.isArray(findOptions?.relations)) {
       findOptions.relations.forEach(relation => {
         queryBuilder = queryBuilder.leftJoinAndSelect(`entity.${relation}`, relation);
       });
@@ -134,7 +134,7 @@ export class BaseService<Entity, CreateDto, UpdateDto> {
     // Validate DTO
     const dto = plainToClass(this.updateDtoClass, updateDto);
     const errors = await validate(dto as any);
-    
+
     if (errors.length > 0) {
       throw new Error(`Validation failed: ${errors.map(e => Object.values(e.constraints || {}).join(', ')).join('; ')}`);
     }
@@ -188,12 +188,12 @@ export class BaseService<Entity, CreateDto, UpdateDto> {
 
     if (options?.query && this.searchableFields.length > 0) {
       const searchFields = options.fields || this.searchableFields;
-      const searchConditions = searchFields.map(field => 
+      const searchConditions = searchFields.map(field =>
         `entity.${field} ILIKE :query`
       ).join(' OR ');
-      
-      queryBuilder = queryBuilder.where(`(${searchConditions})`, { 
-        query: `%${options.query}%` 
+
+      queryBuilder = queryBuilder.where(`(${searchConditions})`, {
+        query: `%${options.query}%`
       });
     }
 
@@ -213,7 +213,7 @@ export class BaseService<Entity, CreateDto, UpdateDto> {
    */
   async bulkCreate(createDtos: CreateDto[]): Promise<Entity[]> {
     const entities = createDtos.map(dto => this.repository.create(dto as any));
-    return await this.repository.save(entities);
+    return await this.repository.save(entities as DeepPartial<Entity>[]) as Entity[];
   }
 
   /**

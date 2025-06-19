@@ -20,7 +20,7 @@ const router = createRouter({
       path: '/products',
       name: 'products',
       component: () => import('../views/products/ProductsView.vue'),
-      meta: { 
+      meta: {
         requiresAuth: true,
         permission: { module: 'products', action: 'read' }
       }
@@ -29,47 +29,47 @@ const router = createRouter({
       path: '/customers',
       name: 'customers',
       component: () => import('../views/customers/CustomersView.vue'),
-      meta: { 
+      meta: {
         requiresAuth: true,
         permission: { module: 'customers', action: 'read' }
       }
     },
-    {
-      path: '/sales',
-      name: 'sales',
-      component: () => import('../views/sales/SalesView.vue'),
-      meta: { 
-        requiresAuth: true,
-        permission: { module: 'sales', action: 'read' }
-      }
-    },
-    {
-      path: '/inventory',
-      name: 'inventory',
-      component: () => import('../views/inventory/InventoryView.vue'),
-      meta: { 
-        requiresAuth: true,
-        permission: { module: 'inventory', action: 'read' }
-      }
-    },
-    {
-      path: '/reports',
-      name: 'reports',
-      component: () => import('../views/reports/ReportsView.vue'),
-      meta: { 
-        requiresAuth: true,
-        permission: { module: 'reports', action: 'read' }
-      }
-    },
-    {
-      path: '/settings',
-      name: 'settings',
-      component: () => import('../views/settings/SettingsView.vue'),
-      meta: { 
-        requiresAuth: true,
-        permission: { module: 'settings', action: 'read' }
-      }
-    },
+    // {
+    //   path: '/sales',
+    //   name: 'sales',
+    //   component: () => import('../views/sales/SalesView.vue'),
+    //   meta: {
+    //     requiresAuth: true,
+    //     permission: { module: 'sales', action: 'read' }
+    //   }
+    // },
+    // {
+    //   path: '/inventory',
+    //   name: 'inventory',
+    //   component: () => import('../views/inventory/InventoryView.vue'),
+    //   meta: {
+    //     requiresAuth: true,
+    //     permission: { module: 'inventory', action: 'read' }
+    //   }
+    // },
+    // {
+    //   path: '/reports',
+    //   name: 'reports',
+    //   component: () => import('../views/reports/ReportsView.vue'),
+    //   meta: {
+    //     requiresAuth: true,
+    //     permission: { module: 'reports', action: 'read' }
+    //   }
+    // },
+    // {
+    //   path: '/settings',
+    //   name: 'settings',
+    //   component: () => import('../views/settings/SettingsView.vue'),
+    //   meta: {
+    //     requiresAuth: true,
+    //     permission: { module: 'settings', action: 'read' }
+    //   }
+    // },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',

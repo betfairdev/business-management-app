@@ -45,9 +45,13 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(createDto.password, saltRounds);
 
+    // Remove or map 'role' if it's a string, as TypeORM expects an object or id reference
+    const { role, ...rest } = createDto;
     const userWithHashedPassword = {
-      ...createDto,
+      ...rest,
       password: hashedPassword,
+      // If you need to set role, map it to an object like: role: { id: role }
+      ...(role ? { role: { id: role } } : {}),
     };
 
     const entity = this.repository.create(userWithHashedPassword);
@@ -71,7 +75,7 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
     const saltRounds = 10;
     const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
-    await this.repository.update(userId, { password: hashedNewPassword } as any);
+    await this.repository.update(userId, { password: hashedNewPassword } as Partial<User>);
   }
 
   /**

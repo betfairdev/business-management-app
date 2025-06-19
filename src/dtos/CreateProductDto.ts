@@ -5,8 +5,6 @@ import {
   IsEnum,
   IsNumber,
   IsArray,
-  ArrayUnique,
-  IsISO8601,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { UnitType, WarrantyDurationType } from '../entities/Product';
