@@ -235,8 +235,12 @@ export class PurchaseService extends BaseService<Purchase, CreatePurchaseDto, Up
         supplier: updateDto.supplier ? { id: updateDto.supplier } : undefined,
         store: updateDto.store ? { id: updateDto.store } : undefined,
         employee: updateDto.employee ? { id: updateDto.employee } : undefined,
-        // We will recalc subTotal/totalAmount after handling items:
-        // Temporarily skip updating subTotal/taxAmount/etc here.
+        subTotal: updateDto.subTotal ? Number(updateDto.subTotal) : undefined,
+        discount: updateDto.discount ? Number(updateDto.discount) : undefined,
+        taxAmount: updateDto.taxAmount ? Number(updateDto.taxAmount) : undefined,
+        shippingCharge: updateDto.shippingCharge ? Number(updateDto.shippingCharge) : undefined,
+        totalAmount: updateDto.totalAmount ? Number(updateDto.totalAmount) : undefined,
+        dueAmount: updateDto.dueAmount ? Number(updateDto.dueAmount) : undefined,
         paymentMethod: updateDto.paymentMethod ? { id: updateDto.paymentMethod } : undefined,
         invoiceNumber: updateDto.invoiceNumber,
         receiptOrAny: updateDto.receiptOrAny,
@@ -355,20 +359,7 @@ export class PurchaseService extends BaseService<Purchase, CreatePurchaseDto, Up
         }
       }
 
-      // 3. Recalculate subTotal, totalAmount, dueAmount if desired, or trust updateDto values:
-      // Optionally:
-      // const sums = await ppRepo.createQueryBuilder('pp')
-      //   .select('SUM(pp.totalCost)', 'sum')
-      //   .where('pp.purchaseId = :pid', { pid: id })
-      //   .getRawOne();
-      // const newSubTotal = Number(sums.sum) || 0;
-      // await purchaseRepo.update(id, {
-      //   subTotal: newSubTotal,
-      //   totalAmount: newSubTotal + (updateDto.taxAmount? Number(updateDto.taxAmount):0) - (updateDto.discount?Number(updateDto.discount):0) + (updateDto.shippingCharge?Number(updateDto.shippingCharge):0),
-      //   dueAmount: /* adjust based on payments */,
-      // } as any);
-
-      // 4. Finally return updated entity with relations
+      // 3. Finally return updated entity with relations
       return await purchaseRepo.findOne({
         where: { id } as any,
         relations: [
@@ -478,5 +469,39 @@ export class PurchaseService extends BaseService<Purchase, CreatePurchaseDto, Up
   async hardDelete(id: string): Promise<void> {
     // It might be wise to soft-delete first and adjust stock; here assume delete after soft-delete handled.
     await this.repository.delete(id);
+  }
+
+  /**
+   * Get purchases by date range
+   */
+  async getPurchasesByDateRange(startDate: string, endDate: string): Promise<Purchase[]> {
+    return await this.repository
+      .createQueryBuilder('purchase')
+      .leftJoinAndSelect('purchase.supplier', 'supplier')
+      .leftJoinAndSelect('purchase.items', 'items')
+      .leftJoinAndSelect('items.product', 'product')
+      .where('purchase.purchaseDate BETWEEN :startDate AND :endDate', { startDate, endDate })
+      .getMany();
+  }
+
+  /**
+   * Get purchase report
+   */
+  async getPurchaseReport(startDate: string, endDate: string): Promise<any> {
+    const purchases = await this.getPurchasesByDateRange(startDate, endDate);
+    
+    const totalPurchases = purchases.length;
+    const totalAmount = purchases.reduce((sum, purchase) => sum + purchase.totalAmount, 0);
+    const totalDiscount = purchases.reduce((sum, purchase) => sum + purchase.discount, 0);
+    const totalTax = purchases.reduce((sum, purchase) => sum + purchase.taxAmount, 0);
+
+    return {
+      totalPurchases,
+      totalAmount,
+      totalDiscount,
+      totalTax,
+      averagePurchaseValue: totalPurchases > 0 ? totalAmount / totalPurchases : 0,
+      purchases,
+    };
   }
 }
