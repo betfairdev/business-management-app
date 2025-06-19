@@ -5,11 +5,9 @@ import {
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
-  DeleteDateColumn,
-  BeforeInsert,
+  DeleteDateColumn
 } from 'typeorm';
 import { Role } from './Role';
-import * as bcrypt from 'bcryptjs'; // Ensure bcrypt is installed
 
 @Entity()
 export class User {
@@ -43,11 +41,4 @@ export class User {
   updatedAt!: Date;
   @DeleteDateColumn()
   deletedAt?: Date;
-
-  @BeforeInsert()
-  async hashPassword() {
-    // caution: need bcrypt import; better handle in service for clearer error handling.
-    const saltRounds = parseInt('10', 10);
-    this.password = await bcrypt.hash(this.password, saltRounds);
-  }
 }

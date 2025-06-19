@@ -90,7 +90,7 @@ export const ENTITIES = [
 const DATABASE_NAME = 'app.db';
 
 let sqliteConnection: SQLiteConnection | null = null;
-let AppDataSource: DataSource | null = null;
+export let AppDataSource: DataSource | null = null;
 
 /**
  * Build DataSourceOptions for web via TypeORM `sqljs` driver.
