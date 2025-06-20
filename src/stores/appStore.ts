@@ -39,6 +39,7 @@ export const useAppStore = defineStore('app', () => {
   const updateSettings = (newSettings: Partial<AppSettings>) => {
     settings.value = { ...settings.value, ...newSettings };
     localStorage.setItem('appSettings', JSON.stringify(settings.value));
+    applyTheme();
   };
 
   const initializeSettings = () => {
@@ -60,19 +61,21 @@ export const useAppStore = defineStore('app', () => {
     const { theme } = settings.value;
     const root = document.documentElement;
 
+    // Remove existing theme classes
+    root.classList.remove('light', 'dark');
+
     if (theme === 'dark') {
       root.classList.add('dark');
     } else if (theme === 'light') {
-      root.classList.remove('dark');
+      root.classList.add('light');
     } else {
       // System theme
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (prefersDark) {
-        root.classList.add('dark');
-      } else {
-        root.classList.remove('dark');
-      }
+      root.classList.add(prefersDark ? 'dark' : 'light');
     }
+
+    // Update body class for proper styling
+    document.body.className = root.classList.contains('dark') ? 'dark' : '';
   };
 
   return {

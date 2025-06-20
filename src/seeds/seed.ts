@@ -18,6 +18,7 @@ import { Supplier, SupplierType } from '../entities/Supplier';
 import { Store, StoreType } from '../entities/Store';
 import { Employee } from '../entities/Employee';
 import { Department } from '../entities/Department';
+import { seedDummyData } from './dummyData';
 // import other reference entities as desired
 
 export async function runSeeds(dataSource: DataSource) {
@@ -52,6 +53,27 @@ export async function runSeeds(dataSource: DataSource) {
         }
       }
     }
+
+    // Add additional permissions for communications
+    const additionalPermissions = [
+      { module: 'Communications', action: 'read' },
+      { module: 'Communications', action: 'create' },
+      { module: 'Communications', action: 'update' },
+      { module: 'Communications', action: 'delete' },
+    ];
+
+    for (const perm of additionalPermissions) {
+      const key = `${perm.module}:${perm.action}`;
+      if (!existingSet.has(key)) {
+        const permEntity = permissionRepo.create({
+          module: perm.module,
+          action: perm.action,
+          isAllowed: true,
+        });
+        toInsertPermissions.push(permEntity);
+      }
+    }
+
     if (toInsertPermissions.length > 0) {
       console.log(`Seeding ${toInsertPermissions.length} permissions...`);
       await permissionRepo.save(toInsertPermissions);
@@ -121,7 +143,7 @@ export async function runSeeds(dataSource: DataSource) {
 
   // 4. PAYMENT METHODS
   try {
-    const paymentMethods = ['Cash', 'Credit Card', 'Bank Transfer', 'Cheque', 'Mobile Payment'];
+    const paymentMethods = ['Cash', 'Credit Card', 'Bank Transfer', 'Cheque', 'Mobile Payment', 'UPI', 'PayPal'];
     const pmRepo = em.getRepository(PaymentMethod);
     for (const name of paymentMethods) {
       const exists = await pmRepo.findOne({ where: { name } });
@@ -151,6 +173,8 @@ export async function runSeeds(dataSource: DataSource) {
       { name: 'VAT 5%', rate: 5 },
       { name: 'VAT 10%', rate: 10 },
       { name: 'VAT 15%', rate: 15 },
+      { name: 'GST 18%', rate: 18 },
+      { name: 'No Tax', rate: 0 },
     ];
     for (const { name, rate } of rates) {
       const exists = await taxRateRepo.findOne({ where: { name } });
@@ -158,8 +182,7 @@ export async function runSeeds(dataSource: DataSource) {
         const tr = taxRateRepo.create({
           name,
           rate,
-          group: standardGroup,
-          description: `${name} under Standard group`,
+          description: `${name} tax rate`,
         } as any);
         await taxRateRepo.save(tr);
         console.log(`Seeded TaxRate: ${name}`);
@@ -173,7 +196,7 @@ export async function runSeeds(dataSource: DataSource) {
   try {
     const categoryRepo = em.getRepository(Category);
     const brandRepo = em.getRepository(Brand);
-    const defaultCategories = ['Miscellaneous', 'General'];
+    const defaultCategories = ['Electronics', 'Clothing', 'Books', 'Home & Garden', 'Sports', 'Miscellaneous', 'General'];
     for (const name of defaultCategories) {
       const exists = await categoryRepo.findOne({ where: { name } });
       if (!exists) {
@@ -182,7 +205,7 @@ export async function runSeeds(dataSource: DataSource) {
         console.log(`Seeded Category: ${name}`);
       }
     }
-    const defaultBrands = ['Generic', 'Unbranded'];
+    const defaultBrands = ['Apple', 'Samsung', 'Nike', 'Adidas', 'Sony', 'Generic', 'Unbranded'];
     for (const name of defaultBrands) {
       const exists = await brandRepo.findOne({ where: { name } });
       if (!exists) {
@@ -210,9 +233,9 @@ export async function runSeeds(dataSource: DataSource) {
       defaultSupplier = supplierRepo.create({
         name: 'Default Supplier',
         supplierType: SupplierType.Wholesaler,
-        email: '',
-        address: '',
-        phone: ''
+        email: 'supplier@example.com',
+        address: '123 Supplier St, Business District',
+        phone: '+1234567890'
         // Add only properties that exist on Supplier entity
       });
       await supplierRepo.save(defaultSupplier);
@@ -223,9 +246,9 @@ export async function runSeeds(dataSource: DataSource) {
     if (!defaultStore) {
       defaultStore = storeRepo.create({
         name: 'Main Store',
-        address: '',
-        phone: '',
-        whatsapp: '',
+        address: '456 Main St, City Center',
+        phone: '+1234567891',
+        whatsapp: '+1234567891',
         type: StoreType.RETAIL,
         stocks: [],
         stockAdjustments: [],
@@ -255,9 +278,13 @@ export async function runSeeds(dataSource: DataSource) {
     let defaultEmployee = await employeeRepo.findOne({ where: { email: defaultAdminEmail } });
     if (!defaultEmployee) {
       defaultEmployee = employeeRepo.create({
-        name: 'System',
+        name: 'System Administrator',
         email: defaultAdminEmail,
+        phone: '+1234567892',
         department: defaultDept,
+        store: defaultStore,
+        salary: 75000,
+        hireDate: '2024-01-01',
         // Add all required fields for Employee entity here, e.g.:
         // name: 'System Admin',
         // attendances: [],
@@ -265,10 +292,18 @@ export async function runSeeds(dataSource: DataSource) {
         // ...other required fields
       });
       await employeeRepo.save(defaultEmployee);
-      console.log('Seeded Employee: System Admin');
+      console.log('Seeded Employee: System Administrator');
     }
   } catch (err) {
     console.error('Error seeding supplier/store/department/employee:', err);
+  }
+
+  // 8. SEED DUMMY DATA
+  try {
+    console.log('🌱 Starting dummy data seeding...');
+    await seedDummyData(dataSource);
+  } catch (err) {
+    console.error('Error seeding dummy data:', err);
   }
 
   console.log('Seeding complete.');

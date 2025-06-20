@@ -71,6 +71,27 @@ const router = createRouter({
       }
     },
     {
+      path: '/communications',
+      name: 'communications',
+      children: [
+        {
+          path: 'email',
+          name: 'email',
+          component: () => import('../views/communications/EmailView.vue'),
+          meta: {
+            requiresAuth: true,
+            permission: { module: 'communications', action: 'read' }
+          }
+        }
+      ]
+    },
+    {
+      path: '/premium',
+      name: 'premium',
+      component: () => import('../components/business/PremiumFeatures.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/settings',
       name: 'settings',
       component: () => import('../views/settings/SettingsView.vue'),
