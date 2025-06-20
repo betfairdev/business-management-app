@@ -1,4 +1,4 @@
-e// src/entities/Employee.ts
+// src/entities/Employee.ts
 
 import {
   Entity, PrimaryGeneratedColumn, Column,

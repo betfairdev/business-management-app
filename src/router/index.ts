@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '../stores/authStore'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -109,8 +108,18 @@ const router = createRouter({
 })
 
 // Navigation guard
-router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore()
+let authInitialized = false;
+
+router.beforeEach(async (to, from, next) => {
+  // Import here to ensure Pinia is ready
+  const { useAuthStore } = await import('../stores/authStore');
+  const authStore = useAuthStore();
+
+  // Ensure auth is initialized (load from localStorage if needed)
+  if (!authInitialized) {
+    await authStore.initializeAuth();
+    authInitialized = true;
+  }
 
   // Check if route requires authentication
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
@@ -121,8 +130,12 @@ router.beforeEach((to, from, next) => {
   // Check permissions
   if (to.meta.permission && authStore.isAuthenticated) {
     const { module, action } = to.meta.permission as { module: string; action: string }
+    // Debug log
+    const perms = Array.isArray(authStore.user?.role?.permissions)
+      ? authStore.user.role.permissions.map(p => ({ module: p.module, action: p.action, isAllowed: p.isAllowed }))
+      : [];
+    console.log('Checking permission:', module, action, 'User permissions:', perms);
     if (!authStore.hasPermission(module, action)) {
-      // Redirect to dashboard or show unauthorized page
       next('/')
       return
     }

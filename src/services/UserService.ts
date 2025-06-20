@@ -28,6 +28,7 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
       return null;
     }
 
+    // Always return user with permissions
     return user;
   }
 

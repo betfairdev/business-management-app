@@ -15,7 +15,14 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!user.value);
   const userPermissions = computed(() => {
     if (!user.value?.role?.permissions) return [];
-    return user.value.role.permissions;
+    // Ensure permissions are always an array of {module, action, isAllowed}
+    return Array.isArray(user.value.role.permissions)
+      ? user.value.role.permissions.map(p => ({
+        module: p.module,
+        action: p.action,
+        isAllowed: p.isAllowed,
+      }))
+      : [];
   });
 
   // Actions
@@ -25,25 +32,28 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const userService = new UserService();
+      // Always fetch with role and permissions
       const authenticatedUser = await userService.login(credentials);
 
       if (authenticatedUser) {
         user.value = authenticatedUser;
-        
+
         // Set user permissions for access control
         if (authenticatedUser.role?.permissions) {
-          AccessControlUtility.setUserPermissions({
-            userId: authenticatedUser.id,
-            roleId: authenticatedUser.role.id,
-            permissions: authenticatedUser.role.permissions.map(p => ({
+          const plainPermissions = Array.isArray(authenticatedUser.role.permissions)
+            ? authenticatedUser.role.permissions.map(p => ({
               module: p.module,
               action: p.action,
               isAllowed: p.isAllowed,
-            })),
+            }))
+            : [];
+          AccessControlUtility.setUserPermissions({
+            userId: authenticatedUser.id,
+            roleId: authenticatedUser.role.id,
+            permissions: plainPermissions,
           });
         }
 
-        // Store in localStorage for persistence
         localStorage.setItem('user', JSON.stringify(authenticatedUser));
         return true;
       } else {
@@ -70,20 +80,32 @@ export const useAuthStore = defineStore('auth', () => {
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        user.value = parsedUser;
+        // If permissions missing, fetch user from API
+        if (!parsedUser.role?.permissions) {
+          const userService = new UserService();
+          const freshUser = await userService.getUserWithPermissions(parsedUser.id);
+          if (freshUser) {
+            user.value = freshUser;
+            localStorage.setItem('user', JSON.stringify(freshUser));
+          }
+        } else {
+          user.value = parsedUser;
+        }
 
         // Restore permissions
-        if (parsedUser.role?.permissions) {
-          AccessControlUtility.setUserPermissions({
-            userId: parsedUser.id,
-            roleId: parsedUser.role.id,
-            permissions: parsedUser.role.permissions.map((p: any) => ({
-              module: p.module,
-              action: p.action,
-              isAllowed: p.isAllowed,
-            })),
-          });
-        }
+        const perms = user.value?.role?.permissions || [];
+        const plainPermissions = Array.isArray(perms)
+          ? perms.map((p: any) => ({
+            module: p.module,
+            action: p.action,
+            isAllowed: p.isAllowed,
+          }))
+          : [];
+        AccessControlUtility.setUserPermissions({
+          userId: user.value.id,
+          roleId: user.value.role?.id,
+          permissions: plainPermissions,
+        });
       } catch (err) {
         console.error('Failed to parse stored user:', err);
         localStorage.removeItem('user');
@@ -113,11 +135,11 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     isLoading,
     error,
-    
+
     // Getters
     isAuthenticated,
     userPermissions,
-    
+
     // Actions
     login,
     logout,
