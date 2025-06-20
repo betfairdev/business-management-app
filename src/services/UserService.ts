@@ -48,11 +48,18 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
 
     // Remove or map 'role' if it's a string, as TypeORM expects an object or id reference
     const { role, ...rest } = createDto;
+    let roleId: string | undefined;
+    if (role) {
+      if (typeof role === 'string') {
+        roleId = role;
+      } else if (typeof role === 'object' && 'id' in role) {
+        roleId = role.id;
+      }
+    }
     const userWithHashedPassword = {
       ...rest,
       password: hashedPassword,
-      // If you need to set role, map it to an object like: role: { id: role }
-      ...(role ? { role: { id: role } } : {}),
+      ...(roleId ? { role: { id: roleId } } : {}),
     };
 
     const entity = this.repository.create(userWithHashedPassword);
