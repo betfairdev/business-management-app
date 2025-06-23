@@ -204,3 +204,5 @@ export abstract class BaseService<Entity extends ObjectLiteral, CreateDto, Updat
     return this.repository;
   }
 }
+
+export { BaseService }
