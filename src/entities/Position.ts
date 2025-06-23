@@ -5,7 +5,9 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { Employee } from './Employee';
 
 @Entity()
 export class Position {
@@ -17,6 +19,9 @@ export class Position {
 
   @Column({ type: 'text', nullable: true })
   description?: string;
+
+  @OneToMany(() => Employee, (employee) => employee.position)
+  employees!: Employee[];
 
   @Column({ type: 'int', nullable: true })
   createdBy?: number;

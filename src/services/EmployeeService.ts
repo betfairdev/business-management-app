@@ -2,7 +2,6 @@ import { BaseService, type PaginationOptions, type PaginatedResult, type SearchO
 import { Employee } from '../entities/Employee';
 import { CreateEmployeeDto } from '../dtos/CreateEmployeeDto';
 import { UpdateEmployeeDto } from '../dtos/UpdateEmployeeDto';
-import { type FindManyOptions } from 'typeorm';
 
 export class EmployeeService extends BaseService<Employee, CreateEmployeeDto, UpdateEmployeeDto> {
   constructor() {
@@ -10,8 +9,7 @@ export class EmployeeService extends BaseService<Employee, CreateEmployeeDto, Up
   }
 
   async findAll(
-    options?: PaginationOptions & SearchOptions,
-    findOptions?: FindManyOptions<Employee>
+    options?: PaginationOptions & SearchOptions & { positionId?: string; departmentId?: string; storeId?: string }
   ): Promise<PaginatedResult<Employee>> {
     const page = options?.page || 1;
     const limit = options?.limit || 10;
@@ -19,12 +17,23 @@ export class EmployeeService extends BaseService<Employee, CreateEmployeeDto, Up
 
     let qb = this.repository.createQueryBuilder('employee')
       .leftJoinAndSelect('employee.department', 'department')
-      .leftJoinAndSelect('employee.store', 'store');
+      .leftJoinAndSelect('employee.store', 'store')
+      .leftJoinAndSelect('employee.position', 'position');
 
     if (options?.query && this.searchableFields.length > 0) {
       const searchFields = options.fields || this.searchableFields;
       const conditions = searchFields.map(field => `employee.${field} ILIKE :query`);
       qb = qb.andWhere(`(${conditions.join(' OR ')})`, { query: `%${options.query}%` });
+    }
+
+    if (options?.positionId) {
+      qb = qb.andWhere('position.id = :positionId', { positionId: options.positionId });
+    }
+    if (options?.departmentId) {
+      qb = qb.andWhere('department.id = :departmentId', { departmentId: options.departmentId });
+    }
+    if (options?.storeId) {
+      qb = qb.andWhere('store.id = :storeId', { storeId: options.storeId });
     }
 
     if (options?.sortBy) {
@@ -46,50 +55,40 @@ export class EmployeeService extends BaseService<Employee, CreateEmployeeDto, Up
 
   async findById(id: string): Promise<Employee | null> {
     return await this.repository.findOne({
-      where: { id } as any,
-      relations: ['department', 'store', 'attendances', 'leaveRequests'],
+      where: { id },
+      relations: ['department', 'position', 'store', 'attendances', 'leaveRequests'],
     });
   }
 
   async create(createDto: CreateEmployeeDto): Promise<Employee> {
-    const employeeData: any = {
+    // Only assign foreign key fields, not objects
+    const employeeData = {
       ...createDto,
-      department: createDto.department ? { id: createDto.department } : undefined,
-      store: createDto.store ? { id: createDto.store } : undefined,
-      role: createDto.role ? { id: createDto.role } : undefined,
+      department: createDto.department,
+      store: createDto.store,
+      position: createDto.position,
+      role: createDto.role,
     };
 
-    const employee = this.repository.create(employeeData);
+    const employee = this.repository.create(employeeData as unknown as Employee);
     return await this.repository.save(employee);
   }
 
   async update(id: string, updateDto: UpdateEmployeeDto): Promise<Employee> {
-    const updateData: any = {
+    // Only assign foreign key fields, not objects
+    const updateData = {
       ...updateDto,
-      department: updateDto.department ? { id: updateDto.department } : undefined,
-      store: updateDto.store ? { id: updateDto.store } : undefined,
-      role: updateDto.role ? { id: updateDto.role } : undefined,
+      department: updateDto.department,
+      store: updateDto.store,
+      position: updateDto.position,
+      role: updateDto.role,
     };
 
-    await this.repository.update(id, updateData);
+    await this.repository.update(id, updateData as unknown as Employee);
     return await this.findById(id) as Employee;
   }
 
-  async getEmployeesByDepartment(departmentId: string): Promise<Employee[]> {
-    return await this.repository.find({
-      where: { department: { id: departmentId } },
-      relations: ['department', 'store'],
-    });
-  }
-
-  async getEmployeesByStore(storeId: string): Promise<Employee[]> {
-    return await this.repository.find({
-      where: { store: { id: storeId } },
-      relations: ['department', 'store'],
-    });
-  }
-
-  async getEmployeeAttendance(employeeId: string, startDate: string, endDate: string): Promise<any[]> {
+  async getEmployeeAttendance(employeeId: string, startDate: string, endDate: string): Promise<ReturnType<EmployeeService['findById']>> {
     const employee = await this.repository.findOne({
       where: { id: employeeId },
       relations: ['attendances'],
@@ -99,17 +98,19 @@ export class EmployeeService extends BaseService<Employee, CreateEmployeeDto, Up
       throw new Error('Employee not found');
     }
 
-    return employee.attendances.filter(attendance => 
+    // Filter attendances by date range
+    employee.attendances = employee.attendances.filter(attendance =>
       attendance.date >= startDate && attendance.date <= endDate
     );
+    return employee;
   }
 
-  async getEmployeeLeaveRequests(employeeId: string): Promise<any[]> {
+  async getEmployeeLeaveRequests(employeeId: string): Promise<Employee | null> {
     const employee = await this.repository.findOne({
       where: { id: employeeId },
       relations: ['leaveRequests'],
     });
 
-    return employee?.leaveRequests || [];
+    return employee;
   }
 }

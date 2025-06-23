@@ -3,6 +3,22 @@ import { Department } from '../entities/Department';
 import { CreateDepartmentDto } from '../dtos/CreateDepartmentDto';
 import { UpdateDepartmentDto } from '../dtos/UpdateDepartmentDto';
 
+  interface DepartmentStats {
+    department: Department;
+    totalEmployees: number;
+    totalSalary: number;
+    averageSalary: number;
+  }
+
+  interface DepartmentReport {
+    id: string;
+    name: string;
+    description: string;
+    employeeCount: number;
+    totalSalary: number;
+  }
+
+
 export class DepartmentService extends BaseService<Department, CreateDepartmentDto, UpdateDepartmentDto> {
   constructor() {
     super(Department, CreateDepartmentDto, UpdateDepartmentDto, ['name', 'description']);
@@ -10,21 +26,21 @@ export class DepartmentService extends BaseService<Department, CreateDepartmentD
 
   async findById(id: string): Promise<Department | null> {
     return await this.repository.findOne({
-      where: { id } as any,
+      where: { id },
       relations: ['employees'],
     });
   }
 
   async getDepartmentWithEmployees(id: string): Promise<Department | null> {
     return await this.repository.findOne({
-      where: { id } as any,
+      where: { id },
       relations: ['employees', 'employees.attendances', 'employees.leaveRequests'],
     });
   }
 
-  async getDepartmentStats(id: string): Promise<any> {
+  async getDepartmentStats(id: string): Promise<DepartmentStats> {
     const department = await this.getDepartmentWithEmployees(id);
-    
+
     if (!department) {
       throw new Error('Department not found');
     }
@@ -40,7 +56,7 @@ export class DepartmentService extends BaseService<Department, CreateDepartmentD
     };
   }
 
-  async getDepartmentReport(): Promise<any[]> {
+  async getDepartmentReport(): Promise<DepartmentReport[]> {
     const departments = await this.repository.find({
       relations: ['employees'],
     });
@@ -48,7 +64,7 @@ export class DepartmentService extends BaseService<Department, CreateDepartmentD
     return departments.map(dept => ({
       id: dept.id,
       name: dept.name,
-      description: dept.description,
+      description: dept.description ?? '',
       employeeCount: dept.employees?.length || 0,
       totalSalary: dept.employees?.reduce((sum, emp) => sum + (emp.salary || 0), 0) || 0,
     }));

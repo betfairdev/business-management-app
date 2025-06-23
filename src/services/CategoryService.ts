@@ -10,7 +10,7 @@ export class CategoryService extends BaseService<Category, CreateCategoryDto, Up
 
   async findById(id: string): Promise<Category | null> {
     return await this.repository.findOne({
-      where: { id } as any,
+      where: { id },
       relations: ['subcategories'],
     });
   }

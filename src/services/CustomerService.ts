@@ -1,8 +1,7 @@
 import { BaseService, type PaginationOptions, type PaginatedResult, type SearchOptions } from './BaseService';
-import { Customer } from '../entities/Customer';
+import { Customer, CustomerType } from '../entities/Customer';
 import { CreateCustomerDto } from '../dtos/CreateCustomerDto';
 import { UpdateCustomerDto } from '../dtos/UpdateCustomerDto';
-import { type FindManyOptions } from 'typeorm';
 
 export class CustomerService extends BaseService<Customer, CreateCustomerDto, UpdateCustomerDto> {
   constructor() {
@@ -10,8 +9,7 @@ export class CustomerService extends BaseService<Customer, CreateCustomerDto, Up
   }
 
   async findAll(
-    options?: PaginationOptions & SearchOptions,
-    findOptions?: FindManyOptions<Customer>
+    options?: PaginationOptions & SearchOptions & { active?: boolean; customerType?: CustomerType }
   ): Promise<PaginatedResult<Customer>> {
     const page = options?.page || 1;
     const limit = options?.limit || 10;
@@ -24,6 +22,16 @@ export class CustomerService extends BaseService<Customer, CreateCustomerDto, Up
       const searchFields = options.fields || this.searchableFields;
       const conditions = searchFields.map(field => `customer.${field} ILIKE :query`);
       qb = qb.andWhere(`(${conditions.join(' OR ')})`, { query: `%${options.query}%` });
+    }
+
+    // Add filter for active/inactive status
+    if (typeof options?.active === 'boolean') {
+      qb = qb.andWhere('customer.active = :active', { active: options.active });
+    }
+
+    // Add filter for customer type
+    if (options?.customerType) {
+      qb = qb.andWhere('customer.customerType = :customerType', { customerType: options.customerType });
     }
 
     if (options?.sortBy) {
@@ -45,23 +53,12 @@ export class CustomerService extends BaseService<Customer, CreateCustomerDto, Up
 
   async findById(id: string): Promise<Customer | null> {
     return await this.repository.findOne({
-      where: { id } as any,
+      where: { id },
       relations: ['sales'],
     });
   }
 
-  async getCustomersByType(customerType: string): Promise<Customer[]> {
-    return await this.repository.find({
-      where: { customerType } as any,
-    });
-  }
-
-  async getActiveCustomers(): Promise<Customer[]> {
-    return await this.repository.find({
-      where: { status: 'Active' },
-    });
-  }
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getCustomerSalesHistory(customerId: string): Promise<any[]> {
     const customer = await this.repository.findOne({
       where: { id: customerId },

@@ -3,6 +3,14 @@ import { Batch } from '../entities/Batch';
 import { CreateBatchDto } from '../dtos/CreateBatchDto';
 import { UpdateBatchDto } from '../dtos/UpdateBatchDto';
 
+interface BatchReport {
+  totalBatches: number;
+  expiringBatches: number;
+  expiredBatches: number;
+  expiringBatchesList: Batch[];
+  expiredBatchesList: Batch[];
+}
+
 export class BatchService extends BaseService<Batch, CreateBatchDto, UpdateBatchDto> {
   constructor() {
     super(Batch, CreateBatchDto, UpdateBatchDto, ['batchNumber']);
@@ -10,7 +18,7 @@ export class BatchService extends BaseService<Batch, CreateBatchDto, UpdateBatch
 
   async findById(id: string): Promise<Batch | null> {
     return await this.repository.findOne({
-      where: { id } as any,
+      where: { id },
       relations: ['products', 'stockEntries'],
     });
   }
@@ -50,7 +58,7 @@ export class BatchService extends BaseService<Batch, CreateBatchDto, UpdateBatch
       .getMany();
   }
 
-  async getBatchReport(): Promise<any> {
+  async getBatchReport(): Promise<BatchReport> {
     const totalBatches = await this.repository.count();
     const expiringBatches = await this.getExpiringBatches(30);
     const expiredBatches = await this.getExpiredBatches();
@@ -64,3 +72,5 @@ export class BatchService extends BaseService<Batch, CreateBatchDto, UpdateBatch
     };
   }
 }
+
+

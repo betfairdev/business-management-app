@@ -2,7 +2,15 @@ import { BaseService, type PaginationOptions, type PaginatedResult, type SearchO
 import { Attendance } from '../entities/Attendance';
 import { CreateAttendanceDto } from '../dtos/CreateAttendanceDto';
 import { UpdateAttendanceDto } from '../dtos/UpdateAttendanceDto';
-import { type FindManyOptions } from 'typeorm';
+import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity.js';
+
+  interface AttendanceReport {
+    totalAttendances: number;
+    lateAttendances: number;
+    onTimeAttendances: number;
+    latePercentage: number;
+    attendances: Attendance[];
+  }
 
 export class AttendanceService extends BaseService<Attendance, CreateAttendanceDto, UpdateAttendanceDto> {
   constructor() {
@@ -10,8 +18,7 @@ export class AttendanceService extends BaseService<Attendance, CreateAttendanceD
   }
 
   async findAll(
-    options?: PaginationOptions & SearchOptions,
-    findOptions?: FindManyOptions<Attendance>
+    options?: PaginationOptions & SearchOptions & { date?: string; startDate?: string; endDate?: string; employeeId?: string },
   ): Promise<PaginatedResult<Attendance>> {
     const page = options?.page || 1;
     const limit = options?.limit || 10;
@@ -20,6 +27,7 @@ export class AttendanceService extends BaseService<Attendance, CreateAttendanceD
     let qb = this.repository.createQueryBuilder('attendance')
       .leftJoinAndSelect('attendance.employee', 'employee');
 
+    // Search
     if (options?.query && this.searchableFields.length > 0) {
       const searchFields = options.fields || this.searchableFields;
       const conditions: string[] = [];
@@ -36,6 +44,20 @@ export class AttendanceService extends BaseService<Attendance, CreateAttendanceD
       }
     }
 
+    // Date filter (today or any specific date)
+    if (options?.date) {
+      qb = qb.andWhere('attendance.date = :date', { date: options.date });
+    }
+    // Date range filter
+    if (options?.startDate && options?.endDate) {
+      qb = qb.andWhere('attendance.date BETWEEN :startDate AND :endDate', { startDate: options.startDate, endDate: options.endDate });
+    }
+    // Employee filter
+    if (options?.employeeId) {
+      qb = qb.andWhere('employee.id = :employeeId', { employeeId: options.employeeId });
+    }
+
+    // Sorting
     if (options?.sortBy) {
       if (options.sortBy.includes('.')) {
         const [alias, col] = options.sortBy.split('.');
@@ -60,25 +82,26 @@ export class AttendanceService extends BaseService<Attendance, CreateAttendanceD
 
   async findById(id: string): Promise<Attendance | null> {
     return await this.repository.findOne({
-      where: { id } as any,
+      where: { id: id },
       relations: ['employee'],
     });
   }
 
   async create(createDto: CreateAttendanceDto): Promise<Attendance> {
-    const attendanceData: any = {
+    const attendanceData = {
       ...createDto,
       employee: { id: createDto.employee },
     };
 
     const attendance = this.repository.create(attendanceData);
-    return await this.repository.save(attendance);
+    return await this.repository.save(attendance as Attendance);
   }
-
+  // No additional code needed here for basic CRUD.
   async update(id: string, updateDto: UpdateAttendanceDto): Promise<Attendance> {
-    const updateData: any = {
+    // build a deep-partial that matches Attendance, with employee as a nested partial
+    const updateData: QueryDeepPartialEntity<Attendance> = {
       ...updateDto,
-      employee: updateDto.employee ? { id: updateDto.employee } : undefined,
+      employee: { id: updateDto.employee },
     };
 
     await this.repository.update(id, updateData);
@@ -86,22 +109,25 @@ export class AttendanceService extends BaseService<Attendance, CreateAttendanceD
   }
 
   async getAttendanceByEmployee(employeeId: string, startDate: string, endDate: string): Promise<Attendance[]> {
-    return await this.repository.find({
-      where: {
-        employee: { id: employeeId },
-        date: startDate, // Note: This would need proper date range query
-      },
-      relations: ['employee'],
-      order: { date: 'DESC' },
-    });
+    return await this.repository.createQueryBuilder('attendance')
+      .leftJoinAndSelect('attendance.employee', 'employee')
+      .where('employee.id = :employeeId', { employeeId })
+      .andWhere('attendance.date BETWEEN :startDate AND :endDate', { startDate, endDate })
+      .orderBy('attendance.date', 'DESC')
+      .getMany();
   }
 
-  async getAttendanceReport(startDate: string, endDate: string): Promise<any> {
-    const attendances = await this.repository
+  async getAttendanceReport(startDate: string, endDate: string, employeeId?: string): Promise<AttendanceReport> {
+    let qb = this.repository
       .createQueryBuilder('attendance')
       .leftJoinAndSelect('attendance.employee', 'employee')
-      .where('attendance.date BETWEEN :startDate AND :endDate', { startDate, endDate })
-      .getMany();
+      .where('attendance.date BETWEEN :startDate AND :endDate', { startDate, endDate });
+
+    if (employeeId) {
+      qb = qb.andWhere('employee.id = :employeeId', { employeeId });
+    }
+
+    const attendances = await qb.getMany();
 
     const totalAttendances = attendances.length;
     const lateAttendances = attendances.filter(att => att.isLate).length;
@@ -118,7 +144,7 @@ export class AttendanceService extends BaseService<Attendance, CreateAttendanceD
 
   async markAttendance(employeeId: string, checkIn: string, checkOut?: string): Promise<Attendance> {
     const today = new Date().toISOString().split('T')[0];
-    
+
     // Check if attendance already exists for today
     const existingAttendance = await this.repository.findOne({
       where: {
@@ -157,9 +183,9 @@ export class AttendanceService extends BaseService<Attendance, CreateAttendanceD
   private calculateLateMinutes(checkIn: string): number {
     const checkInTime = new Date(`1970-01-01T${checkIn}`);
     const standardTime = new Date(`1970-01-01T09:00:00`); // 9 AM standard
-    
+
     if (checkInTime <= standardTime) return 0;
-    
+
     return Math.floor((checkInTime.getTime() - standardTime.getTime()) / (1000 * 60));
   }
 }

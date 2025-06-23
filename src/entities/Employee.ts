@@ -8,6 +8,7 @@ import { Department } from './Department';
 import { Store } from './Store';
 import { Attendance } from './Attendance';
 import { LeaveRequest } from './LeaveRequest';
+import { Position } from './Position';
 
 @Entity()
 export class Employee {
@@ -20,6 +21,7 @@ export class Employee {
 
   @ManyToOne(() => Department, (d) => d.employees, { nullable: true }) department?: Department;
   @ManyToOne(() => Store, (s) => s.employees, { nullable: true }) store?: Store;
+  @ManyToOne(() => Position, (p) => p.employees, { nullable: true }) position?: Position;
 
   @OneToMany(() => Attendance, (a) => a.employee) attendances!: Attendance[];
   @OneToMany(() => LeaveRequest, (l) => l.employee) leaveRequests!: LeaveRequest[];

@@ -15,6 +15,7 @@ export class CreateEmployeeDto {
   @IsOptional() @IsString() whatsapp?: string;
   @IsOptional() @IsString() address?: string;
   @IsOptional() @IsUUID() department?: string;
+    @IsOptional() @IsUUID() position?: string;
   @IsOptional() @IsUUID() store?: string;
   @IsOptional() @IsUUID() role?: string;
   @IsOptional() @IsDateString() hireDate?: string;

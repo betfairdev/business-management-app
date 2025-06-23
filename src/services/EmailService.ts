@@ -11,7 +11,7 @@ export interface EmailTemplate {
 export interface EmailAccount {
   id: string;
   email: string;
-  provider: 'gmail' | 'outlook' | 'smtp';
+  provider: 'gmail' | 'outlook' | 'yahoo' | 'smtp';
   settings: {
     host?: string;
     port?: number;
