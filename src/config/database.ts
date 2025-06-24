@@ -45,6 +45,20 @@ import { Supplier } from '../entities/Supplier';
 import { TaxGroup } from '../entities/TaxGroup';
 import { TaxRate } from '../entities/TaxRate';
 
+// New Entities
+import { Lead } from '../entities/Lead';
+import { Opportunity } from '../entities/Opportunity';
+import { PurchaseOrder } from '../entities/PurchaseOrder';
+import { PurchaseOrderItem } from '../entities/PurchaseOrderItem';
+import { SupplierEvaluation } from '../entities/SupplierEvaluation';
+import { CommunicationLog } from '../entities/CommunicationLog';
+import { EmailConfig } from '../entities/EmailConfig';
+import { SMSConfig } from '../entities/SMSConfig';
+import { WhatsAppConfig } from '../entities/WhatsAppConfig';
+import { Subscription } from '../entities/Subscription';
+import { Feature } from '../entities/Feature';
+import { NotificationLog } from '../entities/NotificationLog';
+
 export const ENTITIES = [
   User,
   Account,
@@ -85,6 +99,19 @@ export const ENTITIES = [
   Supplier,
   TaxGroup,
   TaxRate,
+  // New entities
+  Lead,
+  Opportunity,
+  PurchaseOrder,
+  PurchaseOrderItem,
+  SupplierEvaluation,
+  CommunicationLog,
+  EmailConfig,
+  SMSConfig,
+  WhatsAppConfig,
+  Subscription,
+  Feature,
+  NotificationLog,
 ];
 
 const DATABASE_NAME = 'app.db';
