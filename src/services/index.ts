@@ -26,6 +26,16 @@ export { EmailService } from './communication/EmailService';
 export { SMSService } from './communication/SMSService';
 export { WhatsAppService } from './communication/WhatsAppService';
 export { NotificationService } from './communication/NotificationService';
+export { CommunicationService } from './communication/CommunicationService';
+
+// New Services
+export { LeadService } from './lead/LeadService';
+export { OpportunityService } from './opportunity/OpportunityService';
+export { PurchaseOrderService } from './purchaseOrder/PurchaseOrderService';
+export { SupplierEvaluationService } from './supplierEvaluation/SupplierEvaluationService';
+export { FeatureService } from './feature/FeatureService';
+export { NotificationLogService } from './notification/NotificationLogService';
+export { SetupService } from './setup/SetupService';
 
 // Additional Services
 export { AnalyticsService } from './analytics/AnalyticsService';
@@ -35,7 +45,7 @@ export { IntegrationService } from './integration/IntegrationService';
 export { PrintingService } from './printing/PrintingService';
 
 // Legacy Services (for backward compatibility)
-export { SettingService } from '../services/SettingService';
+export { SettingService } from './SettingService';
 
 // Service Factory for easy access with platform awareness
 export class ServiceFactory {
@@ -264,6 +274,71 @@ export class ServiceFactory {
     return this.instances.get('notification');
   }
 
+  static getCommunicationService() {
+    if (!this.instances.has('communication')) {
+      const { CommunicationService } = require('./communication/CommunicationService');
+      this.instances.set('communication', new CommunicationService());
+    }
+    return this.instances.get('communication');
+  }
+
+  // New Services
+  static getLeadService() {
+    if (!this.instances.has('lead')) {
+      const { LeadService } = require('./lead/LeadService');
+      this.instances.set('lead', new LeadService());
+    }
+    return this.instances.get('lead');
+  }
+
+  static getOpportunityService() {
+    if (!this.instances.has('opportunity')) {
+      const { OpportunityService } = require('./opportunity/OpportunityService');
+      this.instances.set('opportunity', new OpportunityService());
+    }
+    return this.instances.get('opportunity');
+  }
+
+  static getPurchaseOrderService() {
+    if (!this.instances.has('purchaseOrder')) {
+      const { PurchaseOrderService } = require('./purchaseOrder/PurchaseOrderService');
+      this.instances.set('purchaseOrder', new PurchaseOrderService());
+    }
+    return this.instances.get('purchaseOrder');
+  }
+
+  static getSupplierEvaluationService() {
+    if (!this.instances.has('supplierEvaluation')) {
+      const { SupplierEvaluationService } = require('./supplierEvaluation/SupplierEvaluationService');
+      this.instances.set('supplierEvaluation', new SupplierEvaluationService());
+    }
+    return this.instances.get('supplierEvaluation');
+  }
+
+  static getFeatureService() {
+    if (!this.instances.has('feature')) {
+      const { FeatureService } = require('./feature/FeatureService');
+      this.instances.set('feature', new FeatureService());
+    }
+    return this.instances.get('feature');
+  }
+
+  static getNotificationLogService() {
+    if (!this.instances.has('notificationLog')) {
+      const { NotificationLogService } = require('./notification/NotificationLogService');
+      this.instances.set('notificationLog', new NotificationLogService());
+    }
+    return this.instances.get('notificationLog');
+  }
+
+  static getSetupService() {
+    if (!this.instances.has('setup')) {
+      const { SetupService } = require('./setup/SetupService');
+      this.instances.set('setup', new SetupService());
+    }
+    return this.instances.get('setup');
+  }
+
   static getPrintingService() {
     if (!this.instances.has('printing')) {
       const { PrintingService } = require('./printing/PrintingService');
@@ -274,7 +349,7 @@ export class ServiceFactory {
 
   static getSettingService() {
     if (!this.instances.has('setting')) {
-      const { SettingService } = require('../services/SettingService');
+      const { SettingService } = require('./SettingService');
       this.instances.set('setting', new SettingService());
     }
     return this.instances.get('setting');

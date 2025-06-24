@@ -1,15 +1,20 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { UserService } from '../services/UserService';
+import { SubscriptionService } from '../services/subscription/SubscriptionService';
+import { FeatureService } from '../services/feature/FeatureService';
 import { AccessControlUtility } from '../utils/accessControlUtility';
 import type { User } from '../entities/User';
 import type { LoginDto } from '../dtos/LoginDto';
+import type { SubscriptionPlan } from '../entities/Subscription';
 
 export const useAuthStore = defineStore('auth', () => {
   // State
   const user = ref<User | null>(null);
   const isLoading = ref(false);
   const error = ref<string | null>(null);
+  const userPlan = ref<SubscriptionPlan | null>(null);
+  const planFeatures = ref<Record<string, any>>({});
 
   // Getters
   const isAuthenticated = computed(() => !!user.value);
@@ -37,6 +42,9 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (authenticatedUser) {
         user.value = authenticatedUser;
+
+        // Load user subscription and features
+        await loadUserSubscriptionData();
 
         // Set user permissions for access control
         if (authenticatedUser.role?.permissions) {
@@ -70,9 +78,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   const logout = () => {
     user.value = null;
+    userPlan.value = null;
+    planFeatures.value = {};
     error.value = null;
     AccessControlUtility.clearPermissions();
     localStorage.removeItem('user');
+    localStorage.removeItem('userPlan');
+    localStorage.removeItem('planFeatures');
   };
 
   const initializeAuth = async () => {
@@ -91,6 +103,9 @@ export const useAuthStore = defineStore('auth', () => {
         } else {
           user.value = parsedUser;
         }
+
+        // Load subscription data
+        await loadUserSubscriptionData();
 
         // Restore permissions
         const perms = user.value?.role?.permissions || [];
@@ -113,6 +128,39 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const loadUserSubscriptionData = async () => {
+    if (!user.value) return;
+
+    try {
+      const subscriptionService = new SubscriptionService();
+      const featureService = new FeatureService();
+
+      // Get user subscription
+      const subscriptionInfo = await subscriptionService.getUserSubscription(user.value.id);
+      
+      if (subscriptionInfo) {
+        userPlan.value = subscriptionInfo.subscription.plan;
+        planFeatures.value = subscriptionInfo.features;
+      } else {
+        // Default to free plan
+        userPlan.value = 'free' as SubscriptionPlan;
+        planFeatures.value = await featureService.getPlanFeatures('free' as SubscriptionPlan);
+      }
+
+      // Set plan features for access control
+      AccessControlUtility.setUserPlan(userPlan.value, planFeatures.value);
+
+      // Cache subscription data
+      localStorage.setItem('userPlan', userPlan.value);
+      localStorage.setItem('planFeatures', JSON.stringify(planFeatures.value));
+    } catch (err) {
+      console.error('Failed to load subscription data:', err);
+      // Default to free plan on error
+      userPlan.value = 'free' as SubscriptionPlan;
+      planFeatures.value = {};
+    }
+  };
+
   const updateUser = (updatedUser: User) => {
     user.value = updatedUser;
     localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -126,8 +174,32 @@ export const useAuthStore = defineStore('auth', () => {
     return AccessControlUtility.hasModuleAccess(module);
   };
 
+  const hasFeatureAccess = (featureKey: string): boolean => {
+    return AccessControlUtility.hasFeatureAccess(featureKey);
+  };
+
+  const hasFullAccess = (module: string, action: string, featureKey?: string): boolean => {
+    return AccessControlUtility.hasFullAccess(module, action, featureKey);
+  };
+
+  const getFeatureLimit = (featureKey: string): number | undefined => {
+    return AccessControlUtility.getFeatureLimit(featureKey);
+  };
+
+  const isWithinFeatureLimit = (featureKey: string, currentUsage: number): boolean => {
+    return AccessControlUtility.isWithinFeatureLimit(featureKey, currentUsage);
+  };
+
+  const getRemainingFeatureUsage = (featureKey: string, currentUsage: number): number => {
+    return AccessControlUtility.getRemainingFeatureUsage(featureKey, currentUsage);
+  };
+
   const clearError = () => {
     error.value = null;
+  };
+
+  const refreshSubscription = async () => {
+    await loadUserSubscriptionData();
   };
 
   return {
@@ -135,6 +207,8 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     isLoading,
     error,
+    userPlan,
+    planFeatures,
 
     // Getters
     isAuthenticated,
@@ -147,6 +221,12 @@ export const useAuthStore = defineStore('auth', () => {
     updateUser,
     hasPermission,
     hasModuleAccess,
+    hasFeatureAccess,
+    hasFullAccess,
+    getFeatureLimit,
+    isWithinFeatureLimit,
+    getRemainingFeatureUsage,
     clearError,
+    refreshSubscription,
   };
 });
