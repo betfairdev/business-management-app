@@ -19,7 +19,11 @@ export { SMSService } from './communication/SMSService';
 export { WhatsAppService } from './communication/WhatsAppService';
 export { NotificationService } from './communication/NotificationService';
 
-// Printing Service
+// Additional Services
+export { AnalyticsService } from './analytics/AnalyticsService';
+export { BackupService } from './backup/BackupService';
+export { SubscriptionService } from './subscription/SubscriptionService';
+export { IntegrationService } from './integration/IntegrationService';
 export { PrintingService } from './printing/PrintingService';
 
 // Legacy Services (for backward compatibility)
@@ -97,6 +101,34 @@ export class ServiceFactory {
       this.instances.set('reporting', new ReportingService());
     }
     return this.instances.get('reporting');
+  }
+
+  static getAnalyticsService(): AnalyticsService {
+    if (!this.instances.has('analytics')) {
+      this.instances.set('analytics', new AnalyticsService());
+    }
+    return this.instances.get('analytics');
+  }
+
+  static getBackupService(): BackupService {
+    if (!this.instances.has('backup')) {
+      this.instances.set('backup', new BackupService());
+    }
+    return this.instances.get('backup');
+  }
+
+  static getSubscriptionService(): SubscriptionService {
+    if (!this.instances.has('subscription')) {
+      this.instances.set('subscription', new SubscriptionService());
+    }
+    return this.instances.get('subscription');
+  }
+
+  static getIntegrationService(): IntegrationService {
+    if (!this.instances.has('integration')) {
+      this.instances.set('integration', new IntegrationService());
+    }
+    return this.instances.get('integration');
   }
 
   static getEmailService(): EmailService {
